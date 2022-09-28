@@ -68,7 +68,7 @@ def main():
         # extract train set features
         train_feature_filepath = os.path.join(args.save_path, 'temp', 'train_%s.pkl' % class_name)
         if not os.path.exists(train_feature_filepath):
-            for (x, y, mask) in tqdm(train_dataloader, '| feature extraction | train | %s |' % class_name):
+            for (x, y, mask) in tqdm(train_dataloader, f'| feature extraction | train | {class_name} |'):
                 # model prediction
                 with torch.no_grad():
                     pred = model(x.to(device))
@@ -83,7 +83,7 @@ def main():
             with open(train_feature_filepath, 'wb') as f:
                 pickle.dump(train_outputs, f)
         else:
-            print('load train set feature from: %s' % train_feature_filepath)
+            print(f'load train set feature from: {train_feature_filepath}')
             with open(train_feature_filepath, 'rb') as f:
                 train_outputs = pickle.load(f)
 
@@ -92,7 +92,7 @@ def main():
         test_imgs = []
 
         # extract test set features
-        for (x, y, mask) in tqdm(test_dataloader, '| feature extraction | test | %s |' % class_name):
+        for (x, y, mask) in tqdm(test_dataloader, f'| feature extraction | test | {class_name} |'):
             test_imgs.extend(x.cpu().detach().numpy())
             gt_list.extend(y.cpu().detach().numpy())
             gt_mask_list.extend(mask.cpu().detach().numpy())
@@ -119,8 +119,8 @@ def main():
         fpr, tpr, _ = roc_curve(gt_list, scores)
         roc_auc = roc_auc_score(gt_list, scores)
         total_roc_auc.append(roc_auc)
-        print('%s ROCAUC: %.3f' % (class_name, roc_auc))
-        fig_img_rocauc.plot(fpr, tpr, label='%s ROCAUC: %.3f' % (class_name, roc_auc))
+        print(f'{class_name} ROCAUC: {roc_auc:.3f}')
+        fig_img_rocauc.plot(fpr, tpr, label=f'{class_name} ROCAUC: {roc_auc:.3f}')
 
         score_map_list = []
         for t_idx in tqdm(range(test_outputs['avgpool'].shape[0]), '| localization | test | %s |' % class_name):
@@ -163,8 +163,8 @@ def main():
         fpr, tpr, _ = roc_curve(flatten_gt_mask_list, flatten_score_map_list)
         per_pixel_rocauc = roc_auc_score(flatten_gt_mask_list, flatten_score_map_list)
         total_pixel_roc_auc.append(per_pixel_rocauc)
-        print('%s pixel ROCAUC: %.3f' % (class_name, per_pixel_rocauc))
-        fig_pixel_rocauc.plot(fpr, tpr, label='%s ROCAUC: %.3f' % (class_name, per_pixel_rocauc))
+        print(f'{class_name} pixel ROCAUC: {per_pixel_rocauc:.3f}')
+        fig_pixel_rocauc.plot(fpr, tpr, label=f'{class_name} pixel ROCAUC: {per_pixel_rocauc:.3f}')
 
         # get optimal threshold
         precision, recall, thresholds = precision_recall_curve(flatten_gt_mask_list, flatten_score_map_list)
@@ -176,12 +176,12 @@ def main():
         # visualize localization result
         visualize_loc_result(test_imgs, gt_mask_list, score_map_list, threshold, args.save_path, class_name, vis_num=5)
 
-    print('Average ROCAUC: %.3f' % np.mean(total_roc_auc))
-    fig_img_rocauc.title.set_text('Average image ROCAUC: %.3f' % np.mean(total_roc_auc))
+    print(f'Average ROCAUC: {np.mean(total_roc_auc):.3f}')
+    fig_img_rocauc.title.set_text(f'Average image ROCAUC: {np.mean(total_roc_auc):.3f}')
     fig_img_rocauc.legend(loc="lower right")
 
-    print('Average pixel ROCUAC: %.3f' % np.mean(total_pixel_roc_auc))
-    fig_pixel_rocauc.title.set_text('Average pixel ROCAUC: %.3f' % np.mean(total_pixel_roc_auc))
+    print(f'Average pixel ROCUAC: {np.mean(total_pixel_roc_auc):.3f}')
+    fig_pixel_rocauc.title.set_text(f'Average pixel ROCAUC: {np.mean(total_pixel_roc_auc):.3f}')
     fig_pixel_rocauc.legend(loc="lower right")
 
     fig.tight_layout()
