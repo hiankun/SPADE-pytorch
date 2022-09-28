@@ -133,6 +133,10 @@ def main():
                 feat_gallery = topk_feat_map.transpose(3, 1).flatten(0, 2).unsqueeze(-1).unsqueeze(-1)
 
                 # calculate distance matrix
+                # https://github.com/byungjae89/SPADE-pytorch/issues/13#issuecomment-1258855421
+                feat_gallery = feat_gallery.transpose(1,2).transpose(2,3)
+                test_feat_map = test_feat_map.transpose(1,2).transpose(2,3)
+
                 dist_matrix_list = []
                 for d_idx in range(feat_gallery.shape[0] // 100):
                     dist_matrix = torch.pairwise_distance(feat_gallery[d_idx * 100:d_idx * 100 + 100], test_feat_map)
